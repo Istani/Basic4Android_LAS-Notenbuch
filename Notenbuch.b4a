@@ -1,0 +1,525 @@
+﻿Version=3.2
+IconFile=
+NumberOfModules=0
+Package=de.informatikteam.notenbuch
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+UserTypesHint=
+NumberOfFiles=9
+File1=db.sql
+File2=Klassen_ADD.bal
+File3=Klassen_Liste.bal
+File4=klassen_schueler_liste.bal
+File5=main.bal
+File6=noten_add.bal
+File7=schueler_add.bal
+File8=schueler_bild.bal
+File9=schueler_liste.bal
+NumberOfLibraries=5
+Library1=camera
+Library2=core
+Library3=phone
+Library4=sql
+Library5=stringutils
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: LAS-Notenbuch
+	#VersionCode: 1
+	#VersionName: Beta
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim SQL1 As SQL
+	Dim cursor1 As Cursor
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private Klassen_Bezeichnung As EditText
+	Private List_klassen As ScrollView
+	Private List_schueler As ScrollView
+	Private B_Speichern As Button
+	Private Camera As Panel
+	Private schueler_bild As ImageView
+	Private Schueler_add_scroll As ScrollView
+	Private EDIT_Name As EditText
+	Private EDIT_Notiz As EditText
+	Private Auswahl_Klassen As ScrollView
+	Private B_Main As Button
+	
+	Dim PopUp As Panel
+	Dim glob_klasse_auswahl_schuelerliste As Int
+	Private Label2 As Label
+	Private ToggleButton1 As ToggleButton
+	Private ToggleButton10 As ToggleButton
+	Private ToggleButton11 As ToggleButton
+	Private ToggleButton12 As ToggleButton
+	Private ToggleButton2 As ToggleButton
+	Private ToggleButton3 As ToggleButton
+	Private ToggleButton4 As ToggleButton
+	Private ToggleButton5 As ToggleButton
+	Private ToggleButton6 As ToggleButton
+	Private ToggleButton7 As ToggleButton
+	Private ToggleButton8 As ToggleButton
+	Private ToggleButton9 As ToggleButton
+	
+	Private B_NOTEN_BACK As Button
+	Private B_SAVE_NOTEN As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	Activity.LoadLayout("main")
+	If File.Exists(File.DirInternal,"db.sql") = False Then
+		File.Copy(File.DirAssets,"db.sql",File.DirInternal,"db.sql")
+	End If
+	
+	If SQL1.IsInitialized = False Then
+		SQL1.Initialize(File.DirInternal, "db.sql", False)
+	End If
+	
+	'DBload
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If Msgbox2("Programm Beenden?", "", "Ja", "Nein", "", Null) = DialogResponse.POSITIVE Then
+			ExitApplication 'App is exiting
+		Else
+			Return True
+		End If
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Change_Layout(layout As String)
+	Dim test As Phone
+	test.HideKeyboard(Activity)
+	Activity.RemoveAllViews
+	Activity.LoadLayout(layout)
+	Activity.Title="Notenbuch"
+End Sub
+
+Sub Klassen_Button_Click
+	Change_Layout("klassen_liste")
+	'List_klassen.Clear'need to clear the list
+	cursor1 = SQL1.ExecQuery("SELECT * FROM klasse ORDER BY bezeichnung")
+	For i = 0 To cursor1.RowCount - 1
+		Dim Btn As Button
+        Btn.Initialize("Btn")
+		cursor1.Position = i
+		Btn.Tag=cursor1.GetString("klasse_id")
+		Btn.Text=cursor1.GetString("bezeichnung")
+		List_klassen.Panel.AddView(Btn, 10dip, 10dip + 60dip * i, 280dip, 50dip)
+		If (10dip + 60dip * i>=List_klassen.Panel.Height) Then
+			List_klassen.Panel.Height=List_klassen.Panel.Height+80
+		End If
+	Next
+End Sub
+Sub Btn_Click
+    Dim b As Button
+    b = Sender
+	glob_klasse_auswahl_schuelerliste=b.tag
+    'Msgbox(b.tag,"test")
+	Change_Layout("klassen_schueler_liste")
+	cursor1 = SQL1.ExecQuery("SELECT * FROM schueler INNER JOIN noten ON schueler.schueler_id=noten.schueler_id WHERE noten.klasse_id='" & b.Tag & "' ORDER BY schueler.name")
+	For i = 0 To cursor1.RowCount - 1
+		Dim Btn As Button
+        Btn.Initialize("Btn_schueler_in_klasse")
+		cursor1.Position = i
+		Btn.Tag=cursor1.GetString("schueler_id")
+		Btn.Text=cursor1.GetString("name")
+		List_schueler.Panel.AddView(Btn, 10dip, 10dip + 60dip * i, 280dip, 50dip)
+		If (10dip + 60dip * i>=List_schueler.Panel.Height-70) Then
+			List_schueler.Panel.Height=List_schueler.Panel.Height+80
+		End If
+	Next
+End Sub
+Sub Btn_LongClick
+	Dim b As Button
+    b = Sender
+    If (Msgbox2("Wirklich löschen?", "löschen", "Ja", "Nein","",Null)=DialogResponse.POSITIVE) Then
+		SQL1.ExecNonQuery("DELETE FROM klasse WHERE klasse_id=" & b.tag)
+	End If
+	Klassen_Button_Click
+End Sub
+Sub Exit_Click
+	If Msgbox2("Programm Beenden?", "", "Ja", "Nein", "", Null) = DialogResponse.POSITIVE Then
+		ExitApplication 'App is exiting
+	End If
+End Sub
+Sub Settings_Click
+	
+End Sub
+Sub Klassen_Add_Click
+	Change_Layout("klassen_add")
+End Sub
+Sub Schueler_Button_Click
+	Change_Layout("schueler_liste")
+	cursor1 = SQL1.ExecQuery("SELECT * FROM schueler ORDER BY name")
+	For i = 0 To cursor1.RowCount - 1
+		Dim Btn As Button
+        Btn.Initialize("Btn_schueler")
+		cursor1.Position = i
+		Btn.Tag=cursor1.GetString("schueler_id")
+		Btn.Text=cursor1.GetString("name")
+		List_schueler.Panel.AddView(Btn, 10dip, 10dip + 60dip * i, 280dip, 50dip)
+		If (10dip + 60dip * i>=List_schueler.Panel.Height-70) Then
+			List_schueler.Panel.Height=List_schueler.Panel.Height+80
+		End If
+		'List_schueler.Panel.Height=List_schueler.Panel.Height+80
+	Next
+End Sub
+Sub Btn_schueler_Click
+    Dim b As Button
+    b = Sender
+    Msgbox(b.tag,"test")
+End Sub
+Sub Btn_schueler_LongClick
+	Dim b As Button
+    b = Sender
+    If (Msgbox2("Wirklich löschen?", "löschen", "Ja", "Nein","",Null)=DialogResponse.POSITIVE) Then
+		SQL1.ExecNonQuery("DELETE FROM schueler WHERE schueler_id=" & b.tag)
+	End If
+	Schueler_Button_Click
+End Sub
+Sub Schueler_Add_Click
+	Change_Layout("schueler_add")
+	Dim NewID As Int
+	cursor1 = SQL1.ExecQuery("SELECT schueler_id FROM schueler")
+	If cursor1.RowCount > 0 Then
+		For i = 0 To cursor1.RowCount - 1	
+			cursor1.Position = i
+			NewID = cursor1.GetInt("schueler_id")
+		Next
+	End If
+	NewID = NewID +1 ' add 1 to the ID number to make a new ID field
+	If File.Exists(File.DirInternal,NewID & ".jpg")=True Then
+		schueler_bild.Bitmap = LoadBitmap(File.DirInternal,NewID & ".jpg")
+	End If
+	
+	
+	
+	cursor1 = SQL1.ExecQuery("SELECT * FROM klasse ORDER BY bezeichnung")
+	For i = 0 To cursor1.RowCount - 1
+		Dim Btn As CheckBox
+        Btn.Initialize("x")
+		cursor1.Position = i
+		Btn.Tag="Checkbox|" & cursor1.GetString("klasse_id")
+		Btn.Text=cursor1.GetString("bezeichnung")
+		Btn.TextColor=Colors.Black:
+		Auswahl_Klassen.Panel.AddView(Btn, 10dip, 10dip + 60dip * i, 280dip, 50dip)
+		If (10dip + 60dip * i>Auswahl_Klassen.Panel.Height-50) Then
+			Auswahl_Klassen.Panel.Height=Auswahl_Klassen.Panel.Height+100
+		End If
+	Next
+End Sub
+Sub B_Speichern_Click
+	Dim NewID As Int
+	cursor1 = SQL1.ExecQuery("SELECT klasse_id FROM klasse")
+	If cursor1.RowCount > 0 Then
+		For i = 0 To cursor1.RowCount - 1	
+			cursor1.Position = i
+			NewID = cursor1.GetInt("klasse_id")
+		Next
+	End If
+	NewID = NewID +1 ' add 1 to the ID number to make a new ID field
+	SQL1.ExecNonQuery("INSERT INTO klasse VALUES('" & NewID & "','" & Klassen_Bezeichnung.Text & "')")
+	Klassen_Bezeichnung.Text=""
+	Msgbox("Klasse wurde angelegt","Erfolgreich")
+End Sub
+Sub B_Main_Click
+	Change_Layout("Main")
+End Sub
+Sub Klassen_Bezeichnung_EnterPressed
+	B_Speichern_Click
+End Sub
+Sub B_Kamera_Speichern_Click
+	Dim Cam As Camera
+	Cam.Initialize(Camera,"Camera1")
+	Cam.TakePicture
+End Sub
+Sub B_FOTO_Click
+	Change_Layout("schueler_bild")
+	Dim Cam As Camera
+	Cam.Initialize(Camera,"Camera1")
+End Sub
+Sub Camera1_Ready(Success As Boolean)
+	Dim Cam As Camera
+	Cam=Sender
+	Cam.StartPreview
+End Sub
+Sub Camera1_PictureTaken (Data() As Byte)
+	Dim out As OutputStream
+	Dim NewID As Int
+	NewID=0
+	cursor1 = SQL1.ExecQuery("SELECT schueler_id FROM schueler")
+	If cursor1.RowCount > 0 Then
+		For i = 0 To cursor1.RowCount - 1	
+			cursor1.Position = i
+			NewID = cursor1.GetInt("schueler_id")
+		Next
+	End If
+	NewID = NewID +1 ' add 1 to the ID number to make a new ID field
+	
+    
+    out = File.OpenOutput(File.DirInternal, NewID & ".jpg", False)
+    out.WriteBytes(Data, 0, Data.Length)
+    out.Close
+	Schueler_Add_Click
+    'ToastMessageShow("Image saved: " & File.Combine(File.DirInternal, "1.jpg"), True)
+End Sub
+
+Sub B_Schueler_Speichern_Click
+	Dim NewID As Int
+	cursor1 = SQL1.ExecQuery("SELECT schueler_id FROM schueler")
+	If cursor1.RowCount > 0 Then
+		For i = 0 To cursor1.RowCount - 1	
+			cursor1.Position = i
+			NewID = cursor1.GetInt("schueler_id")
+		Next
+	End If
+	NewID = NewID +1 ' add 1 to the ID number to make a new ID field
+	SQL1.ExecNonQuery("INSERT INTO schueler VALUES('" & NewID & "','" & EDIT_Name.Text & "','','','','','" & EDIT_Notiz.text & "')")
+	EDIT_Name.Text=""
+	EDIT_Notiz.Text=""
+	
+	Dim schuler_id As Int
+	schuler_id=NewID
+	
+	Dim cb As CheckBox
+	Dim sf As String, kid As String
+	For Each v As View In Auswahl_Klassen.Panel.GetAllViewsRecursive
+		sf=v.tag
+		If (sf.Contains("Checkbox")) Then
+			kid=sf.Replace("Checkbox|","")
+			cb=v
+			If (cb.Checked=True) Then
+				NewID=0
+				cursor1 = SQL1.ExecQuery("SELECT note_id FROM noten")
+				If cursor1.RowCount > 0 Then
+					For i = 0 To cursor1.RowCount - 1	
+						cursor1.Position = i
+						NewID = cursor1.GetInt("note_id")
+					Next
+				End If
+				NewID = NewID +1 ' add 1 to the ID number to make a new ID field
+				SQL1.ExecNonQuery("INSERT INTO noten VALUES('" & NewID & "','" & schuler_id & "', '" & kid & "','0','DEBUG')")
+			End If
+		End If
+	Next
+	
+	Msgbox("Schüler wurde angelegt","Erfolgreich")
+	Schueler_Add_Click
+End Sub
+
+Sub Btn_schueler_in_klasse_click
+	Dim sid As Int
+	Change_Layout("noten_add")
+	
+	Dim b As Button
+    b = Sender
+	sid=b.Tag
+	
+	Dim Name As String
+	cursor1 = SQL1.ExecQuery("SELECT name FROM schueler WHERE schueler_id='" & sid & "'")
+	If cursor1.RowCount > 0 Then
+		For i = 0 To cursor1.RowCount - 1	
+			cursor1.Position = i
+			Name = cursor1.GetString("name")
+		Next
+	End If
+	
+	Label2.Text=Name
+	Label2.Tag=sid
+	
+	
+	
+End Sub
+Sub ToggleButton1_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton6.Checked=False
+		ToggleButton5.Checked=False
+		ToggleButton4.Checked=False
+		ToggleButton3.Checked=False
+		ToggleButton2.Checked=False
+		ToggleButton1.Checked=False
+		
+		ToggleButton1.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton2_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton6.Checked=False
+		ToggleButton5.Checked=False
+		ToggleButton4.Checked=False
+		ToggleButton3.Checked=False
+		ToggleButton2.Checked=False
+		ToggleButton1.Checked=False
+		
+		ToggleButton2.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton3_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton6.Checked=False
+		ToggleButton5.Checked=False
+		ToggleButton4.Checked=False
+		ToggleButton3.Checked=False
+		ToggleButton2.Checked=False
+		ToggleButton1.Checked=False
+		
+		ToggleButton3.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton4_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton6.Checked=False
+		ToggleButton5.Checked=False
+		ToggleButton4.Checked=False
+		ToggleButton3.Checked=False
+		ToggleButton2.Checked=False
+		ToggleButton1.Checked=False
+		
+		ToggleButton4.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton5_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton6.Checked=False
+		ToggleButton5.Checked=False
+		ToggleButton4.Checked=False
+		ToggleButton3.Checked=False
+		ToggleButton2.Checked=False
+		ToggleButton1.Checked=False
+		
+		ToggleButton5.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton6_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton6.Checked=False
+		ToggleButton5.Checked=False
+		ToggleButton4.Checked=False
+		ToggleButton3.Checked=False
+		ToggleButton2.Checked=False
+		ToggleButton1.Checked=False
+		
+		ToggleButton6.Checked=True
+	End If
+	
+End Sub
+
+Sub ToggleButton7_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton7.Checked=False
+		ToggleButton8.Checked=False
+		ToggleButton9.Checked=False
+		
+		ToggleButton7.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton8_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton7.Checked=False
+		ToggleButton8.Checked=False
+		ToggleButton9.Checked=False
+		
+		ToggleButton8.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton9_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton7.Checked=False
+		ToggleButton8.Checked=False
+		ToggleButton9.Checked=False
+		
+		ToggleButton9.Checked=True
+	End If
+	
+End Sub
+
+Sub ToggleButton10_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton10.Checked=False
+		ToggleButton11.Checked=False
+		ToggleButton12.Checked=False
+		
+		ToggleButton10.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton11_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton10.Checked=False
+		ToggleButton11.Checked=False
+		ToggleButton12.Checked=False
+		
+		ToggleButton11.Checked=True
+	End If
+	
+End Sub
+Sub ToggleButton12_CheckedChange(Checked As Boolean)
+	If Checked Then
+		ToggleButton10.Checked=False
+		ToggleButton11.Checked=False
+		ToggleButton12.Checked=False
+		
+		ToggleButton12.Checked=True
+	End If
+	
+End Sub
+
+Sub B_SAVE_NOTEN_Click
+	Dim note As String, multi As String, sid As String
+	sid=Label2.Tag
+	
+	If (ToggleButton1.Checked) Then note="1"
+	If (ToggleButton2.Checked) Then note="2"
+	If (ToggleButton3.Checked) Then note="3"
+	If (ToggleButton4.Checked) Then note="4"
+	If (ToggleButton5.Checked) Then note="5"
+	If (ToggleButton6.Checked) Then note="6"
+	
+	If (ToggleButton7.Checked) Then note=note & ".3"
+	If (ToggleButton8.Checked) Then note=note & ".5"
+	If (ToggleButton9.Checked) Then note=note & ".7"
+	
+	If (ToggleButton10.Checked) Then multi= "1"
+	If (ToggleButton11.Checked) Then multi= "2"
+	If (ToggleButton12.Checked) Then multi= "3"
+	
+	'Demnächst speichern in SQL
+	B_SAVE_NOTEN.tag=glob_klasse_auswahl_schuelerliste
+	Btn_Click
+End Sub
+Sub B_NOTEN_BACK_Click
+	B_NOTEN_BACK.tag=glob_klasse_auswahl_schuelerliste
+	Btn_Click
+End Sub
